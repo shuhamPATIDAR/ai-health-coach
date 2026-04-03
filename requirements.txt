@@ -1,0 +1,11 @@
+flask
+flask-cors
+xgboost
+joblib
+numpy
+pandas
+scikit-learn
+huggingface-hub
+python-dotenv
+requests
+gunicorn

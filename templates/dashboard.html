@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HealthCoach AI | Wellness Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: white; }
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; }
+        .gradient-text { background: linear-gradient(135deg, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    </style>
+</head>
+<body class="p-6">
+    <nav class="flex justify-between items-center mb-10 border-b border-slate-800 pb-5">
+        <h2 class="text-2xl font-bold text-indigo-500">HealthCoach AI</h2>
+        <div class="flex gap-4">
+            <a href="/predictions" class="bg-indigo-600/20 text-indigo-400 px-4 py-2 rounded-lg font-bold border border-indigo-500/30 hover:bg-indigo-600 hover:text-white transition">Detailed Analysis</a>
+            <button id="logout-btn" class="bg-red-500/10 text-red-400 px-4 py-2 rounded-lg font-bold">Logout</button>
+        </div>
+    </nav>
+
+    <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+        <h1 class="text-4xl font-black">Wellness Hub</h1>
+        <button id="open-log-modal" class="bg-indigo-600 px-8 py-4 rounded-2xl font-bold shadow-lg shadow-indigo-500/20 text-white">+ New Entry</button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        <div class="glass-card p-8 text-center"><p class="text-gray-500 text-xs uppercase font-bold tracking-widest">Sleep</p><h3 id="stat-sleep" class="text-4xl font-black mt-2">--</h3></div>
+        <div class="glass-card p-8 text-center border-b-2 border-indigo-500"><p class="text-gray-500 text-xs uppercase font-bold text-indigo-400 tracking-widest">Stress Status</p><h3 id="stat-stress" class="text-4xl font-black mt-2 text-white">Stable</h3></div>
+        <div class="glass-card p-8 text-center"><p class="text-gray-500 text-xs uppercase font-bold tracking-widest">Steps</p><h3 id="stat-steps" class="text-4xl font-black mt-2">--</h3></div>
+        <div class="glass-card p-8 text-center"><p class="text-gray-500 text-xs uppercase font-bold tracking-widest">Mood Level</p><h3 id="stat-mood" class="text-4xl font-black mt-2">--</h3></div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+        <div class="glass-card p-8">
+            <h3 class="text-xl font-bold mb-4 gradient-text">Daily AI Health Tip</h3>
+            <p id="health-tip" class="text-slate-400">Drink 2L water 💧 Walk 20 mins 🚶 Sleep before 11PM 🌙</p>
+        </div>
+        <div class="glass-card p-8 flex flex-col justify-center">
+            <h3 class="text-xl font-bold mb-2">Health Consistency</h3>
+            <div class="w-full bg-slate-800 rounded-full h-4 mt-2">
+                <div id="health-score-bar" class="bg-indigo-600 h-4 rounded-full" style="width: 80%"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="log-modal" class="fixed inset-0 bg-black/95 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="glass-card w-full max-w-xl p-10 bg-slate-900 border border-slate-700">
+            <h2 class="text-2xl font-bold mb-6 text-center text-white">New Health Entry</h2>
+            <form id="health-form" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="date" id="f-date" class="w-full bg-slate-800 p-3 rounded-xl text-white outline-none border border-slate-700" required>
+                    <input type="number" id="f-sleep" placeholder="Sleep (Hrs)" min="1" max="24" class="w-full bg-slate-800 p-3 rounded-xl text-white outline-none border border-slate-700" required>
+                    <input type="number" id="f-meal" placeholder="Meal Quality (1-10)" min="1" max="10" class="w-full bg-slate-800 p-3 rounded-xl text-white outline-none border border-slate-700" required>
+                    <input type="number" id="f-activity" placeholder="Activity (1-10)" min="1" max="10" class="w-full bg-slate-800 p-3 rounded-xl text-white outline-none border border-slate-700" required>
+                    <input type="number" id="f-steps" placeholder="Steps (Example: 5000)" class="w-full bg-slate-800 p-3 rounded-xl text-white outline-none border border-slate-700" required>
+                    <input type="number" id="f-mood" placeholder="Mood Score (1-10)" min="1" max="10" class="w-full bg-slate-800 p-3 rounded-xl text-white outline-none border border-slate-700" required>
+                    <input type="number" id="f-screen" placeholder="Screen Time (Hrs)" step="0.1" class="w-full bg-slate-800 p-3 rounded-xl text-white outline-none md:col-span-2 border border-slate-700" required>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 py-4 rounded-xl font-bold text-white shadow-lg">Predict with XGBoost</button>
+            </form>
+            <button id="close-log-modal" class="w-full mt-4 text-slate-500 font-bold hover:text-white">Cancel</button>
+        </div>
+    </div>
+
+    <div id="result-modal" class="fixed inset-0 bg-black/90 hidden items-center justify-center p-6 backdrop-blur-md z-[110]">
+        <div class="glass-card w-full max-w-lg p-10 text-center bg-slate-900 border border-slate-700">
+            <h2 class="text-3xl font-black mb-4 gradient-text">Stress Analysis Result</h2>
+            <div id="result-badge" class="py-4 px-6 rounded-2xl text-2xl font-bold mb-6 text-white bg-indigo-600">--</div>
+            <button id="close-result-modal" class="bg-indigo-600 px-8 py-3 rounded-xl font-bold text-white">Back to Dashboard</button>
+        </div>
+    </div>
+
+    <div class="fixed bottom-8 right-8 z-50">
+        <button id="chat-toggle" class="w-16 h-16 bg-indigo-600 rounded-full text-3xl shadow-2xl hover:scale-110 transition-transform">🤖</button>
+        <div id="chat-window" class="hidden absolute bottom-20 right-0 w-80 h-[450px] glass-card bg-slate-900 border border-slate-700 flex flex-col overflow-hidden shadow-2xl">
+            <div class="bg-indigo-600 p-4 font-bold text-white">HealthCoach AI Chat</div>
+            <div id="chat-content" class="flex-1 p-4 overflow-y-auto space-y-4 text-sm bg-black/20"></div>
+            <div class="p-3 border-t border-slate-800 flex gap-2">
+                <input type="text" id="chat-input" class="flex-1 bg-slate-800 p-2 rounded-lg text-white outline-none" placeholder="Ask anything...">
+                <button id="chat-send-btn" class="bg-indigo-600 px-3 rounded-lg text-white font-bold">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/static/dashboard.js"></script>
+</body>
+</html>
