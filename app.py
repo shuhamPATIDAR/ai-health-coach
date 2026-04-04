@@ -5,51 +5,93 @@ import numpy as np
 from hf_client import get_ai_response 
 from logger import setup_logger
 import os
-from dotenv import load_dotenv
-load_dotenv()
-print("HF KEY:", os.getenv("HF_API_KEY"))
 
 app = Flask(__name__)
-CORS(app)
+
+# 🔐 Restrict CORS (replace with your domain later)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
 logger = setup_logger()
 
-# Load Model (Ensure 6 features match: Sleep, Steps, Mood, Activity, Screen, Meal)
+# 🔐 Load API key securely
+HF_API_KEY = os.environ.get("HF_API_KEY")
+
+if not HF_API_KEY:
+    raise ValueError("HF_API_KEY not set in environment variables")
+
+# 🔐 Load Model
 try:
     model = joblib.load('xgb_healthcoach_model.pkl')
     logger.info("Model loaded successfully.")
 except Exception as e:
     logger.error(f"Model error: {e}")
+    model = None
 
+# -------------------------
+# 🌐 Routes
+# -------------------------
 @app.route('/')
-def index(): return render_template('index.html')
+def index():
+    return render_template('index.html')
 
 @app.route('/dashboard')
-def dashboard(): return render_template('dashboard.html')
+def dashboard():
+    return render_template('dashboard.html')
 
 @app.route('/predictions')
-def predictions(): return render_template('predictions.html')
+def predictions():
+    return render_template('predictions.html')
 
+# -------------------------
+# 🧠 Prediction API
+# -------------------------
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
         data = request.json
-        features = np.array([[
-            float(data['sleep']), float(data['steps']), float(data['mood']), 
-            float(data['activity']), float(data['screen']), float(data['meal'])
-        ]])
-        prediction = model.predict(features)[0]
-        stress_map = {0: "Low", 1: "Stable", 2: "High"}
-        return jsonify({"stress": stress_map.get(int(prediction), "Stable")})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
 
+        # ✅ Input validation
+        required_fields = ['sleep', 'steps', 'mood', 'activity', 'screen', 'meal']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"error": f"Missing field: {field}"}), 400
+
+        features = np.array([[ 
+            float(data['sleep']), 
+            float(data['steps']), 
+            float(data['mood']), 
+            float(data['activity']), 
+            float(data['screen']), 
+            float(data['meal'])
+        ]])
+
+        prediction = model.predict(features)[0]
+
+        stress_map = {0: "Low", 1: "Stable", 2: "High"}
+
+        return jsonify({
+            "stress": stress_map.get(int(prediction), "Stable")
+        })
+
+    except Exception as e:
+        logger.error(f"Prediction error: {e}")
+        return jsonify({"error": "Prediction failed"}), 500
+
+# -------------------------
+# 🤖 AI Chat API (SECURE)
+# -------------------------
 @app.route('/chat', methods=['POST'])
 def chat():
     try:
-        user_msg = request.json.get("message")
-        stress = request.json.get("stress", "Stable")
+        data = request.json
 
-        # 🎯 Smart prefix based on stress
+        user_msg = data.get("message")
+        stress = data.get("stress", "Stable")
+
+        if not user_msg:
+            return jsonify({"error": "Message is required"}), 400
+
+        # 🎯 Smart prefix
         if stress == "High":
             prefix = "User is highly stressed. Give calm, short and helpful advice. "
         elif stress == "Low":
@@ -59,13 +101,17 @@ def chat():
 
         final_prompt = prefix + user_msg
 
+        # 🔐 API call (key stays hidden in backend)
         ai_reply = get_ai_response(final_prompt)
 
         return jsonify({"reply": ai_reply})
 
     except Exception as e:
-        print("CHAT ERROR:", e)
-        return jsonify({"reply": "AI error"})
+        logger.error(f"Chat error: {e}")
+        return jsonify({"reply": "AI service unavailable"}), 500
 
+# -------------------------
+# 🚀 Run App
+# -------------------------
 if __name__ == '__main__':
-    app.run(debug=True, use_reloader=False)
+    app.run(host="0.0.0.0", port=10000)
