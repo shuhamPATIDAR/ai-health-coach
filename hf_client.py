@@ -1,10 +1,11 @@
 import os
 import requests
-from dotenv import load_dotenv
 
-load_dotenv()
+# 🔐 Get API key securely
+API_KEY = os.getenv("HF_API_KEY")
 
-API_KEY = os.getenv("OPENROUTER_API_KEY")
+if not API_KEY:
+    raise ValueError("OPENROUTER_API_KEY not set in environment variables")
 
 def get_ai_response(prompt):
     try:
@@ -23,15 +24,24 @@ def get_ai_response(prompt):
             ]
         }
 
-        response = requests.post(url, headers=headers, json=payload)
+        # ⏱️ Add timeout
+        response = requests.post(url, headers=headers, json=payload, timeout=10)
 
         if response.status_code == 200:
             data = response.json()
             return data["choices"][0]["message"]["content"]
-        else:
-            print("ERROR:", response.text)
-            return "AI not responding."
 
-    except Exception as e:
-        print("ERROR:", e)
-        return "Server error"
+        elif response.status_code == 401:
+            return "Invalid API key. Please check server configuration."
+
+        elif response.status_code == 429:
+            return "API rate limit exceeded. Try again later."
+
+        else:
+            return "AI service temporarily unavailable."
+
+    except requests.exceptions.Timeout:
+        return "AI request timed out. Please try again."
+
+    except Exception:
+        return "Server error while processing AI request."
