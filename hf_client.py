@@ -2,7 +2,7 @@ import os
 import requests
 
 # 🔐 Get API key securely
-API_KEY = os.getenv("HF_API_KEY")
+API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 if not API_KEY:
     raise ValueError("OPENROUTER_API_KEY not set in environment variables")
