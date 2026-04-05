@@ -24,7 +24,6 @@ def get_ai_response(prompt):
             ]
         }
 
-        # ⏱️ Add timeout
         response = requests.post(url, headers=headers, json=payload, timeout=10)
 
         if response.status_code == 200:
