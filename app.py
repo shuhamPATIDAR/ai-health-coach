@@ -83,32 +83,23 @@ def predict():
 @app.route('/chat', methods=['POST'])
 def chat():
     try:
+        print("🔥 Chat route hit")
+
         data = request.json
+        print("Incoming data:", data)
 
         user_msg = data.get("message")
-        stress = data.get("stress", "Stable")
+        print("User message:", user_msg)
 
-        if not user_msg:
-            return jsonify({"error": "Message is required"}), 400
+        ai_reply = get_ai_response(user_msg)
 
-        # 🎯 Smart prefix
-        if stress == "High":
-            prefix = "User is highly stressed. Give calm, short and helpful advice. "
-        elif stress == "Low":
-            prefix = "User is relaxed. Talk friendly and positive. "
-        else:
-            prefix = "User is normal. Give balanced advice. "
-
-        final_prompt = prefix + user_msg
-
-        # 🔐 API call (key stays hidden in backend)
-        ai_reply = get_ai_response(final_prompt)
+        print("AI reply:", ai_reply)
 
         return jsonify({"reply": ai_reply})
 
     except Exception as e:
-        logger.error(f"Chat error: {e}")
-        return jsonify({"reply": "AI service unavailable"}), 500
+        print("❌ CHAT ERROR:", str(e))
+        return jsonify({"reply": "Backend error"}), 500
 
 # -------------------------
 # 🚀 Run App
