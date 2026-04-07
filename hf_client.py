@@ -13,7 +13,9 @@ def get_ai_response(prompt):
 
         headers = {
             "Authorization": f"Bearer {API_KEY}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://ai-health-coach-shnt.onrender.com",  # 🔥 IMPORTANT
+            "X-Title": "AI Health Coach"  # 🔥 IMPORTANT
         }
 
         payload = {
