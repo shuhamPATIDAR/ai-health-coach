@@ -16,8 +16,7 @@ logger = setup_logger()
 # 🔐 Load API key securely
 HF_API_KEY = os.environ.get("HF_API_KEY")
 
-if not HF_API_KEY:
-    raise ValueError("HF_API_KEY not set in environment variables")
+
 
 # 🔐 Load Model
 try:
